@@ -1,74 +1,18 @@
-let fixtureIndex = 0;
-let checking = false;
+const ESP_IP = "http://192.168.1.123"; // ← ret til din ESP IP
 
-const COLOR_MAP = {
-  red:    { css: "red" },
-  green:  { css: "green" },
-  blue:   { css: "blue" },
-  white:  { css: "#e5e7eb" },
-  amber:  { css: "orange" },
-  uv:     { css: "purple" }
-};
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+function sendDMX(channel, value) {
+  const url = `${ESP_IP}/dmx?ch=${channel}&val=${value}`;
+  fetch(url).catch(err => console.error(err));
 }
 
-function updateUI(text, color) {
-  const status = document.getElementById("status");
-  const name = document.getElementById("fixtureName");
+function testChannels145_148() {
+  const channels = [145, 146, 147, 148];
 
-  status.innerText = text;
-  status.style.background = color || "#111";
-  name.innerText = currentFixture?.name || "";
-}
+  // tænd alle
+  channels.forEach(ch => sendDMX(ch, 255));
 
-function sendFrame(frame) {
-  fetch("http://192.168.4.1/dmx", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ frame })
-  }).catch(() => {});
-}
-
-async function testFixture(fixture) {
-  updateUI("Tester lampe", "#111");
-
-  for (const color in fixture.channels) {
-    if (!COLOR_MAP[color]) continue;
-
-    let frame = {};
-
-    // nulstil alle kanaler på lampen
-    for (const ch in fixture.channels) {
-      frame[fixture.address + fixture.channels[ch] - 1] = 0;
-    }
-
-    // master dimmer hvis den findes
-    if (fixture.channels.master) {
-      frame[fixture.address + fixture.channels.master - 1] = 255;
-    }
-
-    // aktiv farve
-    frame[fixture.address + fixture.channels[color] - 1] = 255;
-
-    updateUI(`Tester ${color.toUpperCase()}`, COLOR_MAP[color].css);
-    sendFrame(frame);
-
-    await sleep(1000);
-  }
-
-  updateUI("Pause", "#111");
-  await sleep(2000);
-}
-
-async function startCheck() {
-  if (checking) return;
-  checking = true;
-
-  currentFixture = fixtures[fixtureIndex];
-  await testFixture(currentFixture);
-
-  fixtureIndex = (fixtureIndex + 1) % fixtures.length;
-  checking = false;
+  // sluk efter 2 sek
+  setTimeout(() => {
+    channels.forEach(ch => sendDMX(ch, 0));
+  }, 2000);
 }
