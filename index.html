@@ -1,17 +1,55 @@
 <!DOCTYPE html>
 <html lang="da">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MakeLight</title>
-  <link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MakeLight – Check Flow</title>
+  <style>
+    body {
+      background:#0f172a;
+      color:white;
+      font-family:system-ui;
+      padding:20px;
+      text-align:center;
+    }
+    button {
+      width:100%;
+      padding:18px;
+      font-size:20px;
+      border-radius:12px;
+      border:none;
+      background:#3b82f6;
+      color:white;
+      margin-top:20px;
+    }
+    #status {
+      margin-top:30px;
+      height:120px;
+      border-radius:16px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:24px;
+      font-weight:bold;
+      background:#111;
+    }
+    #fixtureName {
+      margin-top:15px;
+      font-size:18px;
+      opacity:0.8;
+    }
+  </style>
 </head>
+
 <body>
 
-<h1>MakeLight</h1>
+  <h1>MakeLight</h1>
+  <button onclick="startCheck()">Check næste lampe</button>
 
-<button onclick="test()">Test kanal 145–148</button>
+  <div id="fixtureName">Klar</div>
+  <div id="status">—</div>
 
-<script src="app.js"></script>
+  <script src="fixtures.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
