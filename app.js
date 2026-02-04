@@ -1,80 +1,35 @@
 /* =========================
-   MakeLight – Fixture Tester
+   MakeLight – Check Flow
    ========================= */
 
-const universeSize = 512;
+const UNIVERSE_SIZE = 512;
+const ESP_DMX_URL = "http://192.168.4.1/dmx";
 
 /* ---------- STATE ---------- */
 
 let fixtureIndex = 0;
-let currentRunId = 0;
+let runId = 0;
 let badFixtures = new Set();
-
-/* ---------- FIXTURES ---------- */
-
-const fixtures = [
-  {
-    name: "Front PAR L",
-    type: "PAR",
-    address: 1,
-    channels: {
-      master: 1,
-      red: 2,
-      green: 3,
-      blue: 4,
-      white: 5
-    }
-  },
-  {
-    name: "Front PAR R",
-    type: "PAR",
-    address: 9,
-    channels: {
-      master: 1,
-      red: 2,
-      green: 3,
-      blue: 4,
-      white: 5
-    }
-  },
-  {
-    name: "Moving Head 1",
-    type: "Moving Head",
-    address: 65,
-    channels: {
-      pan: 1,
-      tilt: 2,
-      master: 3,
-      red: 4,
-      green: 5,
-      blue: 6,
-      white: 7
-    }
-  }
-];
 
 /* ---------- COLOR MAP ---------- */
 
 const COLOR_MAP = {
-  red:   { css: "#ef4444" },
-  green: { css: "#22c55e" },
-  blue:  { css: "#3b82f6" },
-  white: { css: "#e5e7eb" }
+  red:   { css: "#ef4444", label: "RED" },
+  green: { css: "#22c55e", label: "GREEN" },
+  blue:  { css: "#3b82f6", label: "BLUE" },
+  white: { css: "#e5e7eb", label: "WHITE" },
+  amber: { css: "#f59e0b", label: "AMBER" },
+  uv:    { css: "#a855f7", label: "UV" }
 };
 
-/* ---------- DMX ---------- */
+/* ---------- DMX HELPERS ---------- */
 
-function resetUniverse() {
-  return new Uint8Array(universeSize);
-}
-
-function resetFixture(fixture) {
-  const frame = resetUniverse();
-  return frame;
+function emptyFrame() {
+  return new Uint8Array(UNIVERSE_SIZE);
 }
 
 function sendFrame(frame) {
-  fetch("/dmx", {
+  fetch(ESP_DMX_URL, {
     method: "POST",
     body: frame
   }).catch(() => {});
@@ -83,74 +38,85 @@ function sendFrame(frame) {
 /* ---------- UI ---------- */
 
 function channelRange(fixture) {
-  const channelCount = Math.max(...Object.values(fixture.channels));
+  const maxChannel = Math.max(...Object.values(fixture.channels));
   const start = fixture.address;
-  const end = fixture.address + channelCount - 1;
+  const end = fixture.address + maxChannel - 1;
   return `${start}–${end}`;
 }
 
-function updateUI(statusText, bgColor) {
+function updateUI({ status, color }) {
   const fixture = fixtures[fixtureIndex];
-  const range = channelRange(fixture);
 
-  document.body.style.background = bgColor;
+  document.body.style.background = color || "#020617";
 
   document.getElementById("fixtureName").innerText =
-    `${fixture.name}`;
+    fixture.name;
 
   document.getElementById("fixtureMeta").innerText =
-    `${fixture.type} · DMX ${fixture.address} (${range})`;
+    `${fixture.type} · DMX ${fixture.address} (${channelRange(fixture)})`;
 
-  document.getElementById("status").innerText = statusText;
+  document.getElementById("status").innerText = status;
 
   document.getElementById("flagBtn").innerText =
-    badFixtures.has(fixture.name)
+    badFixtures.has(fixture.id)
       ? "⚠️ Marker fjernet"
       : "⚠️ Marker reagerede forkert";
 }
 
-/* ---------- INTERRUPTIBLE SLEEP ---------- */
+/* ---------- INTERRUPTIBLE DELAY ---------- */
 
-function sleep(ms, runId) {
+function wait(ms, localRunId) {
   return new Promise(resolve => {
     const start = Date.now();
-    function check() {
-      if (runId !== currentRunId) return resolve(false);
+    function tick() {
+      if (localRunId !== runId) return resolve(false);
       if (Date.now() - start >= ms) return resolve(true);
-      requestAnimationFrame(check);
+      requestAnimationFrame(tick);
     }
-    check();
+    tick();
   });
 }
 
 /* ---------- TEST LOGIC ---------- */
 
-async function testFixture(fixture, runId) {
+async function testFixture(fixture, localRunId) {
 
-  // FARVER
-  for (const color in fixture.channels) {
-    if (!COLOR_MAP[color]) continue;
+  const dimmer =
+    fixture.channels.master ??
+    fixture.channels.dimmer ??
+    null;
 
-    let frame = resetFixture(fixture);
+  /* ---- FARVER ---- */
 
-    if (fixture.channels.master) {
-      frame[fixture.address + fixture.channels.master - 1] = 255;
+  for (const key of Object.keys(COLOR_MAP)) {
+    if (!(key in fixture.channels)) continue;
+
+    const frame = emptyFrame();
+
+    if (dimmer) {
+      frame[fixture.address + dimmer - 1] = 255;
     }
 
-    frame[fixture.address + fixture.channels[color] - 1] = 255;
+    frame[fixture.address + fixture.channels[key] - 1] = 255;
 
-    updateUI(`Tester ${color.toUpperCase()}`, COLOR_MAP[color].css);
+    updateUI({
+      status: `Tester ${COLOR_MAP[key].label}`,
+      color: COLOR_MAP[key].css
+    });
+
     sendFrame(frame);
 
-    const ok = await sleep(1000, runId);
+    const ok = await wait(1000, localRunId);
     if (!ok) return;
   }
 
-  // BEVÆGELSE
-  if (fixture.type === "Moving Head" &&
-      fixture.channels.pan &&
-      fixture.channels.tilt) {
+  /* ---- MOVING HEAD BEVÆGELSE ---- */
 
+  if (
+    fixture.type.startsWith("moving_head") &&
+    fixture.channels.pan &&
+    fixture.channels.tilt
+  ) {
     const positions = [
       { name: "VENSTRE", pan: 0,   tilt: 127 },
       { name: "HØJRE",   pan: 255, tilt: 127 },
@@ -158,51 +124,58 @@ async function testFixture(fixture, runId) {
     ];
 
     for (const pos of positions) {
-      let frame = resetFixture(fixture);
+      const frame = emptyFrame();
 
-      if (fixture.channels.master) {
-        frame[fixture.address + fixture.channels.master - 1] = 255;
+      if (dimmer) {
+        frame[fixture.address + dimmer - 1] = 255;
       }
 
-      frame[fixture.address + fixture.channels.white - 1] = 255;
+      if (fixture.channels.white) {
+        frame[fixture.address + fixture.channels.white - 1] = 255;
+      }
+
       frame[fixture.address + fixture.channels.pan  - 1] = pos.pan;
       frame[fixture.address + fixture.channels.tilt - 1] = pos.tilt;
 
-      updateUI(`MOVE ${pos.name}`, "#0f172a");
+      updateUI({
+        status: `MOVE ${pos.name}`,
+        color: "#0f172a"
+      });
+
       sendFrame(frame);
 
-      const ok = await sleep(2000, runId);
+      const ok = await wait(2000, localRunId);
       if (!ok) return;
     }
   }
 
-  updateUI("Pause", "#020617");
-  await sleep(1500, runId);
+  updateUI({ status: "Pause", color: "#020617" });
+  await wait(1200, localRunId);
 }
 
 /* ---------- CONTROLS ---------- */
 
 function startCheck() {
-  currentRunId++;
+  runId++;
 
   const fixture = fixtures[fixtureIndex];
-  const runId = currentRunId;
+  const localRunId = runId;
 
-  testFixture(fixture, runId);
+  testFixture(fixture, localRunId);
 
   fixtureIndex = (fixtureIndex + 1) % fixtures.length;
 }
 
 function toggleFlag() {
-  const name = fixtures[fixtureIndex].name;
+  const fixture = fixtures[fixtureIndex];
 
-  if (badFixtures.has(name)) {
-    badFixtures.delete(name);
+  if (badFixtures.has(fixture.id)) {
+    badFixtures.delete(fixture.id);
   } else {
-    badFixtures.add(name);
+    badFixtures.add(fixture.id);
   }
 
-  updateUI("Marker opdateret", "#111827");
+  updateUI({ status: "Marker opdateret", color: "#111827" });
 }
 
 /* ---------- INIT ---------- */
@@ -210,4 +183,4 @@ function toggleFlag() {
 document.getElementById("nextBtn").onclick = startCheck;
 document.getElementById("flagBtn").onclick = toggleFlag;
 
-updateUI("Klar", "#020617");
+updateUI({ status: "Klar", color: "#020617" });
