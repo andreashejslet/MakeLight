@@ -1,93 +1,133 @@
+/* =========================
+   MakeLight – Fixture Tester
+   ========================= */
+
+const universeSize = 512;
+
+/* ---------- STATE ---------- */
+
 let fixtureIndex = 0;
-let checking = false;
-let currentFixture = null;
+let currentRunId = 0;
+let badFixtures = new Set();
+
+/* ---------- FIXTURES ---------- */
+
+const fixtures = [
+  {
+    name: "Front PAR L",
+    type: "PAR",
+    address: 1,
+    channels: {
+      master: 1,
+      red: 2,
+      green: 3,
+      blue: 4,
+      white: 5
+    }
+  },
+  {
+    name: "Front PAR R",
+    type: "PAR",
+    address: 9,
+    channels: {
+      master: 1,
+      red: 2,
+      green: 3,
+      blue: 4,
+      white: 5
+    }
+  },
+  {
+    name: "Moving Head 1",
+    type: "Moving Head",
+    address: 65,
+    channels: {
+      pan: 1,
+      tilt: 2,
+      master: 3,
+      red: 4,
+      green: 5,
+      blue: 6,
+      white: 7
+    }
+  }
+];
+
+/* ---------- COLOR MAP ---------- */
 
 const COLOR_MAP = {
-  red:    { css: "red" },
-  green:  { css: "green" },
-  blue:   { css: "blue" },
-  white:  { css: "#e5e7eb" },
-  amber:  { css: "orange" },
-  uv:     { css: "purple" }
+  red:   { css: "#ef4444" },
+  green: { css: "#22c55e" },
+  blue:  { css: "#3b82f6" },
+  white: { css: "#e5e7eb" }
 };
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+/* ---------- DMX ---------- */
+
+function resetUniverse() {
+  return new Uint8Array(universeSize);
 }
 
-function updateUI(text, color) {
-  const status = document.getElementById("status");
-  const name = document.getElementById("fixtureName");
-  const dmxInfo = document.getElementById("dmxInfo");
-
-  status.innerText = text;
-  status.style.background = color || "#111";
-
-  if (currentFixture) {
-    name.innerText = currentFixture.name || "";
-    dmxInfo.innerText = `DMX start: ${currentFixture.address}`;
-  } else {
-    name.innerText = "";
-    dmxInfo.innerText = "";
-  }
-}
-
-function sendFrame(frame) {
-  fetch("http://192.168.4.1/dmx", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ frame })
-  }).catch(() => {});
-}
-
-// Nulstil ALLE kanaler på fixture
 function resetFixture(fixture) {
-  let frame = {};
-  for (const ch in fixture.channels) {
-    frame[fixture.address + fixture.channels[ch] - 1] = 0;
-  }
+  const frame = resetUniverse();
   return frame;
 }
 
-// Bevægelsestest for moving heads
-async function testMovement(fixture) {
-  if (!fixture.channels.pan || !fixture.channels.tilt) return;
-
-  const panCh  = fixture.address + fixture.channels.pan  - 1;
-  const tiltCh = fixture.address + fixture.channels.tilt - 1;
-
-  const positions = [
-    { name: "VENSTRE", pan: 0,   tilt: 127 },
-    { name: "HØJRE",   pan: 255, tilt: 127 },
-    { name: "MIDT",    pan: 127, tilt: 127 }
-  ];
-
-  for (const pos of positions) {
-    let frame = resetFixture(fixture);
-
-    if (fixture.channels.master) {
-      frame[fixture.address + fixture.channels.master - 1] = 255;
-    }
-
-    if (fixture.channels.white) {
-      frame[fixture.address + fixture.channels.white - 1] = 255;
-    }
-
-    frame[panCh]  = pos.pan;
-    frame[tiltCh] = pos.tilt;
-
-    updateUI(`MOVE ${pos.name}`, "#e5e7eb");
-    sendFrame(frame);
-
-    await sleep(2000);
-  }
+function sendFrame(frame) {
+  fetch("/dmx", {
+    method: "POST",
+    body: frame
+  }).catch(() => {});
 }
 
-// Hoved test-flow for én lampe
-async function testFixture(fixture) {
-  updateUI("Tester lampe", "#111");
+/* ---------- UI ---------- */
 
-  // Farvetest
+function channelRange(fixture) {
+  const channelCount = Math.max(...Object.values(fixture.channels));
+  const start = fixture.address;
+  const end = fixture.address + channelCount - 1;
+  return `${start}–${end}`;
+}
+
+function updateUI(statusText, bgColor) {
+  const fixture = fixtures[fixtureIndex];
+  const range = channelRange(fixture);
+
+  document.body.style.background = bgColor;
+
+  document.getElementById("fixtureName").innerText =
+    `${fixture.name}`;
+
+  document.getElementById("fixtureMeta").innerText =
+    `${fixture.type} · DMX ${fixture.address} (${range})`;
+
+  document.getElementById("status").innerText = statusText;
+
+  document.getElementById("flagBtn").innerText =
+    badFixtures.has(fixture.name)
+      ? "⚠️ Marker fjernet"
+      : "⚠️ Marker reagerede forkert";
+}
+
+/* ---------- INTERRUPTIBLE SLEEP ---------- */
+
+function sleep(ms, runId) {
+  return new Promise(resolve => {
+    const start = Date.now();
+    function check() {
+      if (runId !== currentRunId) return resolve(false);
+      if (Date.now() - start >= ms) return resolve(true);
+      requestAnimationFrame(check);
+    }
+    check();
+  });
+}
+
+/* ---------- TEST LOGIC ---------- */
+
+async function testFixture(fixture, runId) {
+
+  // FARVER
   for (const color in fixture.channels) {
     if (!COLOR_MAP[color]) continue;
 
@@ -102,23 +142,72 @@ async function testFixture(fixture) {
     updateUI(`Tester ${color.toUpperCase()}`, COLOR_MAP[color].css);
     sendFrame(frame);
 
-    await sleep(1000);
+    const ok = await sleep(1000, runId);
+    if (!ok) return;
   }
 
-  // Bevægelse (kun hvis relevant)
-  await testMovement(fixture);
+  // BEVÆGELSE
+  if (fixture.type === "Moving Head" &&
+      fixture.channels.pan &&
+      fixture.channels.tilt) {
 
-  updateUI("Pause", "#111");
-  await sleep(2000);
+    const positions = [
+      { name: "VENSTRE", pan: 0,   tilt: 127 },
+      { name: "HØJRE",   pan: 255, tilt: 127 },
+      { name: "MIDT",    pan: 127, tilt: 127 }
+    ];
+
+    for (const pos of positions) {
+      let frame = resetFixture(fixture);
+
+      if (fixture.channels.master) {
+        frame[fixture.address + fixture.channels.master - 1] = 255;
+      }
+
+      frame[fixture.address + fixture.channels.white - 1] = 255;
+      frame[fixture.address + fixture.channels.pan  - 1] = pos.pan;
+      frame[fixture.address + fixture.channels.tilt - 1] = pos.tilt;
+
+      updateUI(`MOVE ${pos.name}`, "#0f172a");
+      sendFrame(frame);
+
+      const ok = await sleep(2000, runId);
+      if (!ok) return;
+    }
+  }
+
+  updateUI("Pause", "#020617");
+  await sleep(1500, runId);
 }
 
-async function startCheck() {
-  if (checking) return;
-  checking = true;
+/* ---------- CONTROLS ---------- */
 
-  currentFixture = fixtures[fixtureIndex];
-  await testFixture(currentFixture);
+function startCheck() {
+  currentRunId++;
+
+  const fixture = fixtures[fixtureIndex];
+  const runId = currentRunId;
+
+  testFixture(fixture, runId);
 
   fixtureIndex = (fixtureIndex + 1) % fixtures.length;
-  checking = false;
 }
+
+function toggleFlag() {
+  const name = fixtures[fixtureIndex].name;
+
+  if (badFixtures.has(name)) {
+    badFixtures.delete(name);
+  } else {
+    badFixtures.add(name);
+  }
+
+  updateUI("Marker opdateret", "#111827");
+}
+
+/* ---------- INIT ---------- */
+
+document.getElementById("nextBtn").onclick = startCheck;
+document.getElementById("flagBtn").onclick = toggleFlag;
+
+updateUI("Klar", "#020617");
