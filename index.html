@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MakeLight – Check Flow</title>
-
   <style>
     body {
       background:#0f172a;
@@ -13,7 +12,6 @@
       padding:20px;
       text-align:center;
     }
-
     button {
       width:100%;
       padding:18px;
@@ -24,19 +22,6 @@
       color:white;
       margin-top:20px;
     }
-
-    #fixtureName {
-      margin-top:25px;
-      font-size:20px;
-      font-weight:600;
-    }
-
-    #dmxInfo {
-      margin-top:6px;
-      font-size:15px;
-      opacity:0.7;
-    }
-
     #status {
       margin-top:30px;
       height:120px;
@@ -48,17 +33,20 @@
       font-weight:bold;
       background:#111;
     }
+    #fixtureName {
+      margin-top:15px;
+      font-size:18px;
+      opacity:0.8;
+    }
   </style>
 </head>
 
 <body>
 
   <h1>MakeLight</h1>
-
   <button onclick="startCheck()">Check næste lampe</button>
 
   <div id="fixtureName">Klar</div>
-  <div id="dmxInfo"></div>
   <div id="status">—</div>
 
   <script src="fixtures.js"></script>
