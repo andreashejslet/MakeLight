@@ -24,7 +24,7 @@ function updateUI(text, color) {
 }
 
 function sendFrame(frame) {
-  fetch("http://192.168.4.1/dmx", {
+  fetch("http://192.168.1.194/dmx", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ frame })
