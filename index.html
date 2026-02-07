@@ -3,53 +3,80 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MakeLight – Check Flow</title>
+  <title>MakeLight</title>
+
   <style>
     body {
-      background:#0f172a;
-      color:white;
-      font-family:system-ui;
-      padding:20px;
-      text-align:center;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      text-align: center;
+      padding: 20px;
     }
+
+    input, button {
+      padding: 12px;
+      margin: 8px;
+      font-size: 16px;
+    }
+
     button {
-      width:100%;
-      padding:18px;
-      font-size:20px;
-      border-radius:12px;
-      border:none;
-      background:#3b82f6;
-      color:white;
-      margin-top:20px;
+      cursor: pointer;
     }
-    #status {
-      margin-top:30px;
-      height:120px;
-      border-radius:16px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:24px;
-      font-weight:bold;
-      background:#111;
-    }
-    #fixtureName {
-      margin-top:15px;
-      font-size:18px;
-      opacity:0.8;
+
+    .sceneBox {
+      margin-top: 20px;
+      padding: 20px;
+      border: 1px solid #333;
+      background: #1b1b1b;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>MakeLight</h1>
-  <button onclick="startCheck()">Check næste lampe</button>
+  <h1>🎛️ MakeLight</h1>
 
-  <div id="fixtureName">Klar</div>
-  <div id="status">—</div>
+  <div>
+    <input id="songTitle" placeholder="Sangtitel..." />
+    <br/>
+    <button onclick="makeLight()">Generate Show</button>
+    <button onclick="next()">Next Scene</button>
+  </div>
 
-  <script src="fixtures.js"></script>
-  <script src="app.js"></script>
+  <div class="sceneBox">
+    <h2>Aktiv scene:</h2>
+    <h3 id="sceneName">No scene</h3>
+  </div>
+
+
+  <script type="module">
+    import { generateShow } from "./src/ai/generateShow.js";
+    import { loadShow, nextScene, getCurrentScene } from "./src/showController.js";
+
+    function updateUI() {
+      const scene = getCurrentScene();
+      document.getElementById("sceneName").innerText =
+        scene?.name || "No scene";
+    }
+
+    window.makeLight = () => {
+      const song = {
+        title: document.getElementById("songTitle").value
+      };
+
+      const show = generateShow(song);
+      loadShow(show);
+      updateUI();
+
+      console.log("SHOW:", show);
+    };
+
+    window.next = () => {
+      nextScene();
+      updateUI();
+    };
+  </script>
+
 </body>
 </html>
