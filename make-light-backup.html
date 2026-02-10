@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Make Light</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #141414;
+            --text-primary: #f5f5f5;
+            --text-secondary: #888;
+            --accent: #ffcc00;
+            --accent-dim: #665200;
+            --border: #2a2a2a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            max-width: 100vw;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Home Screen */
+        .home-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .home-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(255, 204, 0, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 204, 0, 0.02) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(2.5rem, 8vw, 6rem);
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            margin-bottom: 4rem;
+            text-align: center;
+            position: relative;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .make-light-btn {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            padding: 1.5rem 3rem;
+            background: transparent;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+
+        .make-light-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--accent);
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .make-light-btn:hover::before {
+            left: 0;
+        }
+
+        .make-light-btn:hover {
+            color: var(--bg-primary);
+        }
+
+        .song-list-btn {
+            margin-top: 2rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            padding: 0.75rem 2rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+            animation: fadeInUp 1s ease-out 0.5s both;
+        }
+
+        .song-list-btn:hover {
+            border-color: var(--text-primary);
+            color: var(--text-primary);
+        }
+
+        /* Create Screen */
+        .create-screen {
+            display: none;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .create-screen.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding: 0.5rem 0;
+            margin-bottom: 2rem;
+            transition: color 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .back-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .input-container {
+            max-width: 600px;
+            margin: 4rem auto;
+        }
+
+        .input-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        .song-input {
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0;
+            padding: 1.5rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .song-input:focus {
+            border-color: var(--accent);
+        }
+
+        .questions-container {
+            margin-top: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .question {
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .question:nth-child(1) { animation-delay: 0.1s; }
+        .question:nth-child(2) { animation-delay: 0.2s; }
+        .question:nth-child(3) { animation-delay: 0.3s; }
+
+        .question-text {
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .options {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .option-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.75rem 1.5rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .option-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .option-btn.selected {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .skip-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 0.5rem;
+        }
+
+        .generate-btn {
+            display: block;
+            margin: 3rem auto;
+            padding: 1.25rem 3rem;
+            background: var(--accent);
+            border: none;
+            color: var(--bg-primary);
+            font-family: 'Space Mono', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .generate-btn:hover {
+            background: var(--accent-dim);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Light Preview */
+        .light-preview {
+            display: none;
+            max-width: 800px;
+            margin: 4rem auto;
+            text-align: center;
+        }
+
+        .light-preview.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .light-message {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 300;
+            margin-bottom: 3rem;
+            font-style: italic;
+        }
+
+        .dmx-zones {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 3rem 0;
+            padding: 2rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .zone {
+            aspect-ratio: 1;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .zone::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .zone-label {
+            position: relative;
+            z-index: 1;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .feedback-input {
+            width: 100%;
+            max-width: 600px;
+            margin: 2rem auto;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .save-btn, .refine-btn, .test-btn {
+            padding: 1rem 2.5rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn {
+            background: var(--accent);
+            border: none;
+            color: var(--bg-primary);
+        }
+
+        .refine-btn, .test-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .save-btn:hover {
+            background: var(--accent-dim);
+        }
+
+        .refine-btn:hover, .test-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Song List Screen */
+        .songlist-screen {
+            display: none;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .songlist-screen.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .songlist-header {
+            max-width: 800px;
+            margin: 0 auto 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .songlist-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+
+        .songs-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .song-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .song-item:hover {
+            border-color: var(--accent);
+        }
+
+        .song-item.active {
+            border-color: var(--accent);
+            background: rgba(255, 204, 0, 0.05);
+        }
+
+        .song-title {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .song-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .song-structure {
+            display: none;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .song-item.active .song-structure {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .structure-part {
+            padding: 0.5rem 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .structure-part.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .structure-part:hover {
+            border-color: var(--accent);
+        }
+
+        /* Loading & Status */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .status-message {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-left: 3px solid var(--accent);
+            font-size: 0.9rem;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Settings Panel */
+        .settings-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .settings-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .settings-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 100vh;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            padding: 2rem;
+            z-index: 999;
+            overflow-y: auto;
+        }
+
+        .settings-panel.active {
+            display: block;
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .settings-group {
+            margin-bottom: 2rem;
+        }
+
+        .settings-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .settings-group input {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            padding: 0.75rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Home Screen -->
+        <div class="home-screen active" id="homeScreen">
+            <h1 class="logo">Make Light</h1>
+            <button class="make-light-btn" onclick="showCreateScreen()">Make Light</button>
+            <button class="song-list-btn" onclick="showSongList()">Song Library</button>
+        </div>
+
+        <!-- Create Screen -->
+        <div class="create-screen" id="createScreen">
+            <button class="back-btn" onclick="showHomeScreen()">← Back</button>
+            
+            <div class="input-container">
+                <div class="input-label">What do you want to make light for?</div>
+                <input 
+                    type="text" 
+                    class="song-input" 
+                    id="songInput"
+                    placeholder="e.g. Human - Rag & Bone Man"
+                    onkeypress="if(event.key === 'Enter') generateQuestions()"
+                >
+            </div>
+
+            <div class="questions-container" id="questionsContainer"></div>
+
+            <div class="light-preview" id="lightPreview">
+                <div class="light-message">...and there was light — try it out</div>
+                <div class="dmx-zones" id="dmxZones"></div>
+                <div class="action-buttons">
+                    <button class="test-btn" onclick="testLight()">Test Light</button>
+                    <button class="save-btn" onclick="saveLight()">Save</button>
+                </div>
+                <textarea class="feedback-input" id="feedbackInput" placeholder="How should I adjust the light?"></textarea>
+                <button class="refine-btn" onclick="refineLight()">Refine</button>
+            </div>
+        </div>
+
+        <!-- Song List Screen -->
+        <div class="songlist-screen" id="songlistScreen">
+            <div class="songlist-header">
+                <h2 class="songlist-title">Setlist</h2>
+                <button class="back-btn" onclick="showHomeScreen()">← Back</button>
+            </div>
+            <div class="songs-container" id="songsContainer">
+                <div class="empty-state">
+                    <div class="empty-state-icon">💡</div>
+                    <p>No saved songs yet</p>
+                    <p style="font-size: 0.85rem; margin-top: 0.5rem;">Create your first light design</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <button class="settings-btn" onclick="toggleSettings()">⚙</button>
+        <div class="settings-panel" id="settingsPanel">
+            <h3 style="margin-bottom: 2rem;">Settings</h3>
+            
+            <div class="settings-group">
+                <label>Claude API Key</label>
+                <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+            </div>
+
+            <div class="settings-group">
+                <label>ESP8266 IP Address</label>
+                <input type="text" id="espIpInput" placeholder="192.168.1.100" value="192.168.1.100">
+            </div>
+
+            <div class="settings-group">
+                <label>DMX Universe</label>
+                <input type="number" id="dmxUniverseInput" value="1">
+            </div>
+
+            <button class="save-btn" style="width: 100%; margin-top: 1rem;" onclick="saveSettings()">Save Settings</button>
+        </div>
+    </div>
+
+    <script>
+        // App State
+        let currentSong = null;
+        let currentLight = null;
+        let savedSongs = JSON.parse(localStorage.getItem('savedSongs') || '[]');
+        let settings = JSON.parse(localStorage.getItem('settings') || '{}');
+        let dmxConfig = null;
+        let activeSongId = null;
+        let activePartIndex = 0;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            loadDMXConfig();
+            renderSongList();
+        });
+
+        // Load DMX Configuration
+        async function loadDMXConfig() {
+            try {
+                const response = await fetch('dmx-config.json');
+                dmxConfig = await response.json();
+                console.log('DMX Config loaded:', dmxConfig);
+            } catch (error) {
+                console.warn('Could not load DMX config, using defaults');
+                dmxConfig = getDefaultConfig();
+            }
+        }
+
+        function getDefaultConfig() {
+            return {
+                dmx_config: {
+                    zones: {
+                        'front_right': { fixtures: [{ start_channel: 1, channel_map: { red: 1, green: 2, blue: 3, dimmer: 4, strobe: 5 } }] },
+                        'front_left': { fixtures: [{ start_channel: 8, channel_map: { red: 8, green: 9, blue: 10, dimmer: 11, strobe: 12 } }] },
+                        'mid_right': { fixtures: [{ start_channel: 15, channel_map: { red: 15, green: 16, blue: 17, dimmer: 18, strobe: 19 } }] },
+                        'mid_left': { fixtures: [{ start_channel: 22, channel_map: { red: 22, green: 23, blue: 24, dimmer: 25, strobe: 26 } }] },
+                        'back_right': { fixtures: [{ start_channel: 29, channel_map: { red: 29, green: 30, blue: 31, dimmer: 32, strobe: 33 } }] },
+                        'back_left': { fixtures: [{ start_channel: 36, channel_map: { red: 36, green: 37, blue: 38, dimmer: 39, strobe: 40 } }] }
+                    }
+                }
+            };
+        }
+
+        // Navigation
+        function showHomeScreen() {
+            document.querySelectorAll('.home-screen, .create-screen, .songlist-screen').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById('homeScreen').classList.add('active');
+        }
+
+        function showCreateScreen() {
+            document.querySelectorAll('.home-screen, .create-screen, .songlist-screen').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById('createScreen').classList.add('active');
+            document.getElementById('songInput').focus();
+        }
+
+        function showSongList() {
+            document.querySelectorAll('.home-screen, .create-screen, .songlist-screen').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById('songlistScreen').classList.add('active');
+            renderSongList();
+        }
+
+        // Settings
+        function toggleSettings() {
+            document.getElementById('settingsPanel').classList.toggle('active');
+        }
+
+        function loadSettings() {
+            if (settings.apiKey) document.getElementById('apiKeyInput').value = settings.apiKey;
+            if (settings.espIp) document.getElementById('espIpInput').value = settings.espIp;
+            if (settings.dmxUniverse) document.getElementById('dmxUniverseInput').value = settings.dmxUniverse;
+        }
+
+        function saveSettings() {
+            settings = {
+                apiKey: document.getElementById('apiKeyInput').value,
+                espIp: document.getElementById('espIpInput').value,
+                dmxUniverse: parseInt(document.getElementById('dmxUniverseInput').value)
+            };
+            localStorage.setItem('settings', JSON.stringify(settings));
+            document.getElementById('settingsPanel').classList.remove('active');
+            showStatus('Settings saved');
+        }
+
+        // AI Integration
+        async function generateQuestions() {
+            const songInput = document.getElementById('songInput').value.trim();
+            if (!songInput) return;
+
+            if (!settings.apiKey) {
+                showStatus('Please set your Claude API key in settings');
+                toggleSettings();
+                return;
+            }
+
+            currentSong = { input: songInput };
+            
+            const questionsContainer = document.getElementById('questionsContainer');
+            questionsContainer.innerHTML = '<div class="loading">Analyzing song...</div>';
+
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': settings.apiKey,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 1024,
+                        messages: [{
+                            role: 'user',
+                            content: `Du er en kreativ lysdesigner. Brugeren vil lave lys til: "${songInput}"
+                            
+Stil 2-3 korte, præcise spørgsmål for at forstå den ønskede stemning og stil. Spørgsmålene skal have konkrete valgmuligheder.
+Hvis du ikke genkender sangen, spørg ind til genren eller stemningen.
+
+Returner KUN et JSON objekt i dette format:
+{
+  "songTitle": "sangtitel hvis kendt, ellers null",
+  "questions": [
+    {
+      "text": "Spørgsmålstekst?",
+      "options": ["Mulighed 1", "Mulighed 2", "Mulighed 3"]
+    }
+  ]
+}`
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                const content = data.content[0].text;
+                
+                // Extract JSON from response
+                const jsonMatch = content.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    const questions = JSON.parse(jsonMatch[0]);
+                    currentSong.title = questions.songTitle || songInput;
+                    renderQuestions(questions.questions);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus('Error generating questions. Check your API key.');
+            }
+        }
+
+        function renderQuestions(questions) {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = questions.map((q, index) => `
+                <div class="question">
+                    <div class="question-text">${q.text}</div>
+                    <div class="options">
+                        ${q.options.map(opt => `
+                            <button class="option-btn" onclick="selectOption(${index}, '${opt}')">${opt}</button>
+                        `).join('')}
+                    </div>
+                    <button class="skip-btn" onclick="skipQuestion(${index})">Skip</button>
+                </div>
+            `).join('');
+            
+            container.innerHTML += '<button class="generate-btn" onclick="generateLight()">Generate Light</button>';
+        }
+
+        function selectOption(questionIndex, option) {
+            const buttons = document.querySelectorAll(`.question:nth-child(${questionIndex + 1}) .option-btn`);
+            buttons.forEach(btn => {
+                if (btn.textContent === option) {
+                    btn.classList.toggle('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+        }
+
+        function skipQuestion(index) {
+            const question = document.querySelectorAll('.question')[index];
+            question.style.opacity = '0.5';
+        }
+
+        async function generateLight() {
+            const selectedOptions = Array.from(document.querySelectorAll('.option-btn.selected'))
+                .map(btn => btn.textContent);
+
+            document.getElementById('questionsContainer').innerHTML = '<div class="loading">Creating light design...</div>';
+
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': settings.apiKey,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 2048,
+                        messages: [{
+                            role: 'user',
+                            content: `Design kreativt lys til "${currentSong.input}". 
+Brugerens præferencer: ${selectedOptions.join(', ') || 'ingen specifikke'}
+
+Lav et lysdesign med 6 zoner: front_right, front_left, mid_right, mid_left, back_right, back_left.
+Hver zone kan have: color (hex), intensity (0-255), effect (none/strobe/pulse).
+
+Lav også en sangstruktur med 4-6 dele (f.eks. intro, verse, chorus, bridge, outro).
+
+Returner KUN JSON:
+{
+  "structure": ["intro", "verse", "chorus", "verse", "chorus", "outro"],
+  "parts": {
+    "intro": {
+      "zones": {
+        "front_right": {"color": "#hex", "intensity": 0-255, "effect": "none"},
+        ...
+      },
+      "description": "kort beskrivelse"
+    },
+    ...
+  }
+}`
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                const content = data.content[0].text;
+                const jsonMatch = content.match(/\{[\s\S]*\}/);
+                
+                if (jsonMatch) {
+                    currentLight = JSON.parse(jsonMatch[0]);
+                    currentSong.lightDesign = currentLight;
+                    displayLightPreview();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus('Error generating light design');
+            }
+        }
+
+        function displayLightPreview() {
+            document.getElementById('questionsContainer').style.display = 'none';
+            const preview = document.getElementById('lightPreview');
+            preview.classList.add('active');
+            
+            // Render DMX zones for first part
+            const firstPart = currentLight.structure[0];
+            renderDMXZones(currentLight.parts[firstPart].zones);
+        }
+
+        function renderDMXZones(zones) {
+            const container = document.getElementById('dmxZones');
+            const zoneOrder = ['back_left', 'back_right', 'mid_left', 'mid_right', 'front_left', 'front_right'];
+            
+            container.innerHTML = zoneOrder.map(zoneName => {
+                const zone = zones[zoneName] || { color: '#000000', intensity: 0 };
+                return `
+                    <div class="zone" style="background-color: ${zone.color}${Math.round(zone.intensity/255*100).toString(16).padStart(2, '0')}">
+                        <span class="zone-label">${zoneName.replace('_', ' ').toUpperCase()}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function testLight() {
+            if (!currentLight) return;
+            
+            const firstPart = currentLight.structure[0];
+            await sendDMXData(currentLight.parts[firstPart].zones);
+            showStatus('Light sent to DMX controller');
+        }
+
+        async function refineLight() {
+            const feedback = document.getElementById('feedbackInput').value.trim();
+            if (!feedback) return;
+
+            document.getElementById('lightPreview').innerHTML = '<div class="loading">Refining design...</div>';
+
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': settings.apiKey,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 2048,
+                        messages: [{
+                            role: 'user',
+                            content: `Nuværende lysdesign:
+${JSON.stringify(currentLight, null, 2)}
+
+Brugerens feedback: "${feedback}"
+
+Juster lysdesignet baseret på feedback. Behold struktur format.
+Returner KUN opdateret JSON.`
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                const content = data.content[0].text;
+                const jsonMatch = content.match(/\{[\s\S]*\}/);
+                
+                if (jsonMatch) {
+                    currentLight = JSON.parse(jsonMatch[0]);
+                    currentSong.lightDesign = currentLight;
+                    document.getElementById('feedbackInput').value = '';
+                    displayLightPreview();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus('Error refining light');
+            }
+        }
+
+        function saveLight() {
+            if (!currentLight || !currentSong) return;
+
+            const song = {
+                id: Date.now(),
+                title: currentSong.title,
+                input: currentSong.input,
+                lightDesign: currentLight,
+                createdAt: new Date().toISOString()
+            };
+
+            savedSongs.push(song);
+            localStorage.setItem('savedSongs', JSON.stringify(savedSongs));
+            
+            showStatus('Light design saved!');
+            setTimeout(() => showSongList(), 1000);
+        }
+
+        // Song List
+        function renderSongList() {
+            const container = document.getElementById('songsContainer');
+            
+            if (savedSongs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💡</div>
+                        <p>No saved songs yet</p>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem;">Create your first light design</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = savedSongs.map(song => `
+                <div class="song-item ${activeSongId === song.id ? 'active' : ''}" onclick="toggleSong(${song.id})">
+                    <div class="song-title">${song.title}</div>
+                    <div class="song-meta">Created ${new Date(song.createdAt).toLocaleDateString()}</div>
+                    <div class="song-structure">
+                        ${song.lightDesign.structure.map((part, index) => `
+                            <div class="structure-part ${activePartIndex === index && activeSongId === song.id ? 'active' : ''}" 
+                                 onclick="event.stopPropagation(); activatePart(${song.id}, ${index})">
+                                ${part}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleSong(songId) {
+            if (activeSongId === songId) {
+                activeSongId = null;
+                activePartIndex = 0;
+            } else {
+                activeSongId = songId;
+                activePartIndex = 0;
+                const song = savedSongs.find(s => s.id === songId);
+                if (song) {
+                    activatePart(songId, 0);
+                }
+            }
+            renderSongList();
+        }
+
+        async function activatePart(songId, partIndex) {
+            activePartIndex = partIndex;
+            const song = savedSongs.find(s => s.id === songId);
+            if (!song) return;
+
+            const partName = song.lightDesign.structure[partIndex];
+            const zones = song.lightDesign.parts[partName].zones;
+            
+            await sendDMXData(zones);
+            renderSongList();
+        }
+
+        // DMX Communication
+        async function sendDMXData(zones) {
+            if (!settings.espIp) {
+                showStatus('Please set ESP8266 IP address in settings');
+                return;
+            }
+
+            // Convert zones to DMX channels
+            const dmxData = zonesToDMX(zones);
+            
+            try {
+                await fetch(`http://${settings.espIp}/dmx`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ channels: dmxData })
+                });
+            } catch (error) {
+                console.error('DMX send error:', error);
+                showStatus('Could not reach DMX controller');
+            }
+        }
+
+        function zonesToDMX(zones) {
+            const dmxChannels = new Array(512).fill(0);
+            
+            if (!dmxConfig || !dmxConfig.dmx_config) {
+                console.warn('No DMX config, using basic mapping');
+                return basicZonesToDMX(zones);
+            }
+
+            Object.entries(zones).forEach(([zoneName, zoneData]) => {
+                const zoneConfig = dmxConfig.dmx_config.zones[zoneName];
+                if (!zoneConfig || !zoneConfig.fixtures) return;
+
+                zoneConfig.fixtures.forEach(fixture => {
+                    const channelMap = fixture.channel_map;
+                    const color = hexToRGB(zoneData.color);
+                    
+                    // Set RGB channels
+                    if (channelMap.red) dmxChannels[channelMap.red - 1] = color.r;
+                    if (channelMap.green) dmxChannels[channelMap.green - 1] = color.g;
+                    if (channelMap.blue) dmxChannels[channelMap.blue - 1] = color.b;
+                    
+                    // Set dimmer/intensity
+                    if (channelMap.dimmer) {
+                        dmxChannels[channelMap.dimmer - 1] = zoneData.intensity || 0;
+                    }
+                    
+                    // Set effects
+                    if (zoneData.effect === 'strobe' && channelMap.strobe) {
+                        dmxChannels[channelMap.strobe - 1] = 200;
+                    } else if (channelMap.strobe) {
+                        dmxChannels[channelMap.strobe - 1] = 0;
+                    }
+
+                    // White channel for RGBW
+                    if (channelMap.white && zoneData.white) {
+                        dmxChannels[channelMap.white - 1] = zoneData.white;
+                    }
+                });
+            });
+
+            return dmxChannels;
+        }
+
+        function basicZonesToDMX(zones) {
+            // Fallback basic mapping
+            const dmxChannels = new Array(512).fill(0);
+            
+            const zoneChannelMap = {
+                'front_right': { start: 1, channels: 7 },
+                'front_left': { start: 8, channels: 7 },
+                'mid_right': { start: 15, channels: 7 },
+                'mid_left': { start: 22, channels: 7 },
+                'back_right': { start: 29, channels: 7 },
+                'back_left': { start: 36, channels: 7 }
+            };
+
+            Object.entries(zones).forEach(([zoneName, zoneData]) => {
+                const mapping = zoneChannelMap[zoneName];
+                if (!mapping) return;
+
+                const { start } = mapping;
+                const color = hexToRGB(zoneData.color);
+                
+                dmxChannels[start - 1] = color.r;
+                dmxChannels[start] = color.g;
+                dmxChannels[start + 1] = color.b;
+                dmxChannels[start + 2] = zoneData.intensity;
+                
+                if (zoneData.effect === 'strobe') {
+                    dmxChannels[start + 3] = 200;
+                }
+            });
+
+            return dmxChannels;
+        }
+
+        function hexToRGB(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 0, g: 0, b: 0 };
+        }
+
+        // Touch/Swipe handling for live control
+        let touchStartX = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            if (!activeSongId) return;
+            
+            const touchEndX = e.changedTouches[0].clientX;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > 50) {
+                const song = savedSongs.find(s => s.id === activeSongId);
+                if (!song) return;
+                
+                if (diff > 0 && activePartIndex < song.lightDesign.structure.length - 1) {
+                    // Swipe left - next part
+                    activatePart(activeSongId, activePartIndex + 1);
+                } else if (diff < 0 && activePartIndex > 0) {
+                    // Swipe right - previous part
+                    activatePart(activeSongId, activePartIndex - 1);
+                }
+            }
+        });
+
+        // Status messages
+        function showStatus(message) {
+            const existing = document.querySelector('.status-message');
+            if (existing) existing.remove();
+
+            const status = document.createElement('div');
+            status.className = 'status-message';
+            status.textContent = message;
+            document.querySelector('.app-container').appendChild(status);
+
+            setTimeout(() => status.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
