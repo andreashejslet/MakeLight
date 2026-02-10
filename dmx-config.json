@@ -1,0 +1,166 @@
+{
+  "dmx_config": {
+    "universe": 1,
+    "refresh_rate_hz": 44,
+    "zones": {
+      "front_right": {
+        "fixtures": [
+          {
+            "name": "Front Right Wash",
+            "type": "rgb_par",
+            "start_channel": 1,
+            "channel_map": {
+              "red": 1,
+              "green": 2,
+              "blue": 3,
+              "dimmer": 4,
+              "strobe": 5,
+              "function": 6,
+              "speed": 7
+            }
+          }
+        ]
+      },
+      "front_left": {
+        "fixtures": [
+          {
+            "name": "Front Left Wash",
+            "type": "rgb_par",
+            "start_channel": 8,
+            "channel_map": {
+              "red": 8,
+              "green": 9,
+              "blue": 10,
+              "dimmer": 11,
+              "strobe": 12,
+              "function": 13,
+              "speed": 14
+            }
+          }
+        ]
+      },
+      "mid_right": {
+        "fixtures": [
+          {
+            "name": "Mid Right Wash",
+            "type": "rgb_par",
+            "start_channel": 15,
+            "channel_map": {
+              "red": 15,
+              "green": 16,
+              "blue": 17,
+              "dimmer": 18,
+              "strobe": 19,
+              "function": 20,
+              "speed": 21
+            }
+          }
+        ]
+      },
+      "mid_left": {
+        "fixtures": [
+          {
+            "name": "Mid Left Wash",
+            "type": "rgb_par",
+            "start_channel": 22,
+            "channel_map": {
+              "red": 22,
+              "green": 23,
+              "blue": 24,
+              "dimmer": 25,
+              "strobe": 26,
+              "function": 27,
+              "speed": 28
+            }
+          }
+        ]
+      },
+      "back_right": {
+        "fixtures": [
+          {
+            "name": "Back Right Wash",
+            "type": "rgb_par",
+            "start_channel": 29,
+            "channel_map": {
+              "red": 29,
+              "green": 30,
+              "blue": 31,
+              "dimmer": 32,
+              "strobe": 33,
+              "function": 34,
+              "speed": 35
+            }
+          }
+        ]
+      },
+      "back_left": {
+        "fixtures": [
+          {
+            "name": "Back Left Wash",
+            "type": "rgb_par",
+            "start_channel": 36,
+            "channel_map": {
+              "red": 36,
+              "green": 37,
+              "blue": 38,
+              "dimmer": 39,
+              "strobe": 40,
+              "function": 41,
+              "speed": 42
+            }
+          }
+        ]
+      }
+    }
+  },
+  "fixture_types": {
+    "rgb_par": {
+      "description": "Standard RGB PAR can with dimmer and strobe",
+      "channels": 7,
+      "capabilities": ["color", "dimmer", "strobe"]
+    },
+    "moving_head": {
+      "description": "Moving head with pan/tilt",
+      "channels": 11,
+      "capabilities": ["color", "dimmer", "strobe", "movement", "gobo"]
+    },
+    "simple_dimmer": {
+      "description": "Single channel dimmer",
+      "channels": 1,
+      "capabilities": ["dimmer"]
+    },
+    "rgbw_par": {
+      "description": "RGBW PAR with white channel",
+      "channels": 8,
+      "capabilities": ["color", "white", "dimmer", "strobe"]
+    }
+  },
+  "network": {
+    "esp8266_ip": "192.168.1.100",
+    "http_port": 80,
+    "timeout_ms": 5000
+  },
+  "ai_settings": {
+    "model": "claude-sonnet-4-20250514",
+    "max_tokens": 2048,
+    "temperature_presets": {
+      "cold": ["blue", "cyan", "white"],
+      "warm": ["red", "orange", "yellow"],
+      "neutral": ["white", "amber"]
+    },
+    "mood_presets": {
+      "energetic": {
+        "intensity_range": [180, 255],
+        "effects": ["strobe", "pulse"]
+      },
+      "calm": {
+        "intensity_range": [50, 120],
+        "effects": ["fade"]
+      },
+      "dramatic": {
+        "intensity_range": [0, 255],
+        "effects": ["none"]
+      }
+    }
+  }
+}
