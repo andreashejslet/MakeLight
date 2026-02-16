@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Make Light Absalon er sød</title>
+    <title>Make Light </title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -916,7 +916,7 @@
                 ],
                 'gemini': [
                     { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash (Try first)' },
-                    { value: 'gemini-1.5-flash-latest', label: 'Gemini 1.5 Flash Latest' },
+                    { value: 'gemini-1.5-flash-8b', label: 'Gemini 1.5 Flash 8B' },
                     { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
                     { value: 'gemini-pro', label: 'Gemini Pro' }
                 ],
@@ -935,7 +935,7 @@
             const keyInfo = {
                 'claude': { label: 'Claude API Key', help: 'Get key: console.anthropic.com', placeholder: 'sk-ant-...' },
                 'openai': { label: 'OpenAI API Key', help: 'Get key: platform.openai.com/api-keys', placeholder: 'sk-proj-...' },
-                'gemini': { label: 'Gemini API Key (Gratis!)', help: 'Get key: makersuite.google.com/app/apikey', placeholder: 'AIza...' },
+                'gemini': { label: 'Gemini API Key (Gratis!)', help: 'Get key: aistudio.google.com/app/apikey', placeholder: 'AIza...' },
                 'ollama': { label: 'Ollama (Local - No Key Needed)', help: 'Install: ollama.com/download', placeholder: 'No API key needed' }
             };
             
@@ -1035,7 +1035,25 @@
                         generationConfig: { 
                             maxOutputTokens: 2000,
                             temperature: 0.7
-                        }
+                        },
+                        safetySettings: [
+                            {
+                                category: "HARM_CATEGORY_HARASSMENT",
+                                threshold: "BLOCK_NONE"
+                            },
+                            {
+                                category: "HARM_CATEGORY_HATE_SPEECH", 
+                                threshold: "BLOCK_NONE"
+                            },
+                            {
+                                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                                threshold: "BLOCK_NONE"
+                            },
+                            {
+                                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                                threshold: "BLOCK_NONE"
+                            }
+                        ]
                     })
                 });
                 
@@ -1052,12 +1070,31 @@
                         errorData = { message: errorText };
                     }
                     
-                    throw new Error(`Gemini API error ${response.status}: ${JSON.stringify(errorData)}`);
+                    // Provide more helpful error messages
+                    if (response.status === 400) {
+                        throw new Error(`Gemini API 400: Invalid request. Check model name: ${model}. Available models: gemini-1.5-flash, gemini-1.5-pro`);
+                    } else if (response.status === 403) {
+                        throw new Error(`Gemini API 403: Invalid API key or API not enabled. Get key: https://makersuite.google.com/app/apikey`);
+                    } else {
+                        throw new Error(`Gemini API error ${response.status}: ${JSON.stringify(errorData)}`);
+                    }
                 }
                 
                 const data = await response.json();
                 console.log('✅ Gemini Success:', data);
-                return data.candidates[0].content.parts[0].text;
+                
+                // Check if response has candidates
+                if (!data.candidates || data.candidates.length === 0) {
+                    throw new Error('Gemini returned no candidates. Response may be blocked by safety filters.');
+                }
+                
+                // Check if candidate has content
+                const candidate = data.candidates[0];
+                if (!candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
+                    throw new Error('Gemini candidate has no content. Response may be empty.');
+                }
+                
+                return candidate.content.parts[0].text;
             } catch (error) {
                 console.error('💥 Gemini Call Failed:', error);
                 throw error;
