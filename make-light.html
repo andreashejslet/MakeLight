@@ -915,10 +915,11 @@
                     { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' }
                 ],
                 'gemini': [
-                    { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash (Try first)' },
-                    { value: 'gemini-1.5-flash-8b', label: 'Gemini 1.5 Flash 8B' },
-                    { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
-                    { value: 'gemini-pro', label: 'Gemini Pro' }
+                    { value: 'gemini-1.5-flash-latest', label: 'Gemini 1.5 Flash (Try first)' },
+                    { value: 'gemini-1.5-flash-001', label: 'Gemini 1.5 Flash 001' },
+                    { value: 'gemini-1.5-flash-002', label: 'Gemini 1.5 Flash 002' },
+                    { value: 'gemini-1.5-pro-latest', label: 'Gemini 1.5 Pro' },
+                    { value: 'gemini-1.0-pro', label: 'Gemini 1.0 Pro' }
                 ],
                 'ollama': [
                     { value: 'llama3.1', label: 'Llama 3.1' },
@@ -1014,7 +1015,7 @@
         }
 
         async function callGemini(prompt) {
-            const model = settings.aiModel || 'gemini-1.5-flash';
+            const model = settings.aiModel || 'gemini-1.5-flash-latest';
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${settings.apiKey}`;
             
             console.log('🔍 Gemini Debug:', {
@@ -1072,9 +1073,11 @@
                     
                     // Provide more helpful error messages
                     if (response.status === 400) {
-                        throw new Error(`Gemini API 400: Invalid request. Check model name: ${model}. Available models: gemini-1.5-flash, gemini-1.5-pro`);
+                        throw new Error(`Gemini API 400: Invalid request. Check model name: ${model}. Available models: gemini-1.5-flash-latest, gemini-1.5-pro-latest`);
                     } else if (response.status === 403) {
-                        throw new Error(`Gemini API 403: Invalid API key or API not enabled. Get key: https://makersuite.google.com/app/apikey`);
+                        throw new Error(`Gemini API 403: Invalid API key or API not enabled. Get key: https://aistudio.google.com/app/apikey`);
+                    } else if (response.status === 404) {
+                        throw new Error(`Gemini API 404: Model "${model}" not found. Try: gemini-1.5-flash-latest or use Test Connection to find available models.`);
                     } else {
                         throw new Error(`Gemini API error ${response.status}: ${JSON.stringify(errorData)}`);
                     }
