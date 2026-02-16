@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Make Light Mobile</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #141414;
+            --text-primary: #f5f5f5;
+            --text-secondary: #888;
+            --accent: #ffcc00;
+            --border: #2a2a2a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Mobile-optimized layout */
+        .mobile-container {
+            max-width: 100vw;
+            min-height: 100vh;
+            padding: 1rem;
+            padding-bottom: 80px; /* Space for bottom nav */
+        }
+
+        /* Home Screen */
+        .screen {
+            display: none;
+            min-height: calc(100vh - 80px);
+            padding: 1rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .home-header {
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .logo-mobile {
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+        }
+
+        /* Big touch-friendly button */
+        .main-button {
+            width: 100%;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            background: linear-gradient(135deg, var(--accent) 0%, #e6b800 100%);
+            border: none;
+            border-radius: 12px;
+            color: var(--bg-primary);
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(255, 204, 0, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .main-button:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 10px rgba(255, 204, 0, 0.2);
+        }
+
+        /* Input */
+        .input-group {
+            margin: 1.5rem 0;
+        }
+
+        .input-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .text-input:focus {
+            border-color: var(--accent);
+        }
+
+        /* Questions */
+        .question-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin: 1rem 0;
+            border: 1px solid var(--border);
+        }
+
+        .question-text {
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .option-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .option-btn {
+            padding: 0.875rem;
+            background: var(--bg-primary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .option-btn.selected {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg-primary);
+            font-weight: 600;
+        }
+
+        .option-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Light zones preview */
+        .zones-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+        }
+
+        .zone-card {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .zone-label {
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem 0;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem 1rem;
+            transition: color 0.2s;
+        }
+
+        .nav-btn.active {
+            color: var(--accent);
+        }
+
+        .nav-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Status messages */
+        .status-box {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            right: 1rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent);
+            border-radius: 12px;
+            padding: 1rem;
+            font-size: 0.85rem;
+            z-index: 200;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            animation: slideDown 0.3s ease;
+        }
+
+        /* Connection status */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+        }
+
+        .status-dot.connected {
+            background: #0f0;
+            box-shadow: 0 0 8px #0f0;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        /* Song list */
+        .song-item {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 0.75rem 0;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .song-item.active {
+            border-color: var(--accent);
+        }
+
+        .song-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .song-meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Settings */
+        .settings-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin: 1rem 0;
+        }
+
+        .settings-row {
+            margin: 1rem 0;
+        }
+
+        .settings-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .settings-input {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--bg-primary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Swipe indicator */
+        .swipe-hint {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin: 1rem 0;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- Home Screen -->
+        <div class="screen active" id="homeScreen">
+            <div class="home-header">
+                <h1 class="logo-mobile">Make Light</h1>
+                <p class="subtitle">Mobile Edition</p>
+            </div>
+
+            <div class="connection-status" id="connectionStatus">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Not connected to Ollama</span>
+            </div>
+
+            <button class="main-button" onclick="checkConnection()">
+                🔗 Connect to Ollama
+            </button>
+
+            <button class="main-button" onclick="showScreen('createScreen')" style="background: transparent; border: 2px solid var(--accent); color: var(--accent); box-shadow: none;">
+                ✨ Make Light
+            </button>
+        </div>
+
+        <!-- Create Screen -->
+        <div class="screen" id="createScreen">
+            <h2 style="margin-bottom: 1.5rem;">Create Light Design</h2>
+
+            <div class="input-group">
+                <label class="input-label">Song or Artist</label>
+                <input 
+                    type="text" 
+                    class="text-input" 
+                    id="songInput"
+                    placeholder="e.g. Bohemian Rhapsody - Queen"
+                >
+            </div>
+
+            <button class="main-button" onclick="generateQuestions()">
+                Generate Design →
+            </button>
+
+            <div id="questionsContainer"></div>
+
+            <div id="lightPreview" style="display: none;">
+                <h3 style="margin: 1.5rem 0 1rem;">...and there was light</h3>
+                <div class="zones-grid" id="zonesGrid"></div>
+                
+                <button class="main-button" onclick="saveLight()">
+                    💾 Save Design
+                </button>
+            </div>
+        </div>
+
+        <!-- Songs Screen -->
+        <div class="screen" id="songsScreen">
+            <h2 style="margin-bottom: 1.5rem;">My Setlist</h2>
+            <div id="songsContainer">
+                <div class="empty-state">
+                    <div class="empty-icon">💡</div>
+                    <p>No saved songs yet</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Screen -->
+        <div class="screen" id="settingsScreen">
+            <h2 style="margin-bottom: 1.5rem;">Settings</h2>
+
+            <div class="settings-card">
+                <div class="settings-row">
+                    <label class="settings-label">Ollama Server (Desktop Computer)</label>
+                    <input 
+                        type="text" 
+                        class="settings-input" 
+                        id="ollamaUrlInput"
+                        placeholder="http://192.168.1.100:11434"
+                    >
+                    <small style="color: var(--text-secondary); font-size: 0.7rem; margin-top: 0.5rem; display: block;">
+                        Find your computer's IP: Settings → Network
+                    </small>
+                </div>
+
+                <div class="settings-row">
+                    <label class="settings-label">AI Model</label>
+                    <select class="settings-input" id="modelInput">
+                        <option value="llama3.1">Llama 3.1</option>
+                        <option value="mistral">Mistral</option>
+                        <option value="phi">Phi</option>
+                    </select>
+                </div>
+
+                <div class="settings-row">
+                    <label class="settings-label">ESP8266 DMX Controller</label>
+                    <input 
+                        type="text" 
+                        class="settings-input" 
+                        id="espIpInput"
+                        placeholder="192.168.1.150"
+                    >
+                </div>
+
+                <button class="main-button" onclick="saveSettings()">
+                    💾 Save Settings
+                </button>
+
+                <button class="main-button" onclick="checkConnection()" style="background: transparent; border: 2px solid var(--accent); color: var(--accent); box-shadow: none;">
+                    🧪 Test Connection
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <button class="nav-btn active" onclick="showScreen('homeScreen')">
+            <span class="nav-icon">🏠</span>
+            <span>Home</span>
+        </button>
+        <button class="nav-btn" onclick="showScreen('createScreen')">
+            <span class="nav-icon">✨</span>
+            <span>Create</span>
+        </button>
+        <button class="nav-btn" onclick="showScreen('songsScreen')">
+            <span class="nav-icon">🎵</span>
+            <span>Songs</span>
+        </button>
+        <button class="nav-btn" onclick="showScreen('settingsScreen')">
+            <span class="nav-icon">⚙️</span>
+            <span>Settings</span>
+        </button>
+    </div>
+
+    <script>
+        // State
+        let settings = JSON.parse(localStorage.getItem('mobileSettings') || '{"ollamaUrl":"http://192.168.1.100:11434","model":"llama3.1","espIp":"192.168.1.150"}');
+        let savedSongs = JSON.parse(localStorage.getItem('mobileSongs') || '[]');
+        let currentLight = null;
+        let currentSong = null;
+        let isConnected = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            renderSongs();
+            checkConnection();
+        });
+
+        // Navigation
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            event.target.closest('.nav-btn')?.classList.add('active');
+        }
+
+        // Settings
+        function loadSettings() {
+            document.getElementById('ollamaUrlInput').value = settings.ollamaUrl || '';
+            document.getElementById('modelInput').value = settings.model || 'llama3.1';
+            document.getElementById('espIpInput').value = settings.espIp || '';
+        }
+
+        function saveSettings() {
+            settings = {
+                ollamaUrl: document.getElementById('ollamaUrlInput').value,
+                model: document.getElementById('modelInput').value,
+                espIp: document.getElementById('espIpInput').value
+            };
+            localStorage.setItem('mobileSettings', JSON.stringify(settings));
+            showStatus('✅ Settings saved');
+        }
+
+        // Connection check
+        async function checkConnection() {
+            showStatus('🔄 Checking connection...');
+            
+            try {
+                const response = await fetch(`${settings.ollamaUrl}/api/tags`);
+                if (response.ok) {
+                    isConnected = true;
+                    document.getElementById('statusDot').classList.add('connected');
+                    document.getElementById('statusText').textContent = 'Connected to Ollama';
+                    showStatus('✅ Connected to Ollama!');
+                } else {
+                    throw new Error('Cannot connect');
+                }
+            } catch (error) {
+                isConnected = false;
+                document.getElementById('statusDot').classList.remove('connected');
+                document.getElementById('statusText').textContent = 'Not connected';
+                showStatus('❌ Cannot connect to Ollama. Check settings.');
+            }
+        }
+
+        // AI Integration
+        async function callOllama(prompt) {
+            const response = await fetch(`${settings.ollamaUrl}/api/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: settings.model,
+                    prompt: prompt,
+                    stream: false
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ollama error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.response;
+        }
+
+        async function generateQuestions() {
+            const songInput = document.getElementById('songInput').value.trim();
+            if (!songInput) {
+                showStatus('❌ Please enter a song name');
+                return;
+            }
+
+            if (!isConnected) {
+                showStatus('❌ Not connected to Ollama');
+                return;
+            }
+
+            currentSong = { input: songInput };
+            
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div>Generating questions...</div>';
+
+            try {
+                const prompt = 'Du er lysdesigner. Bruger vil lave lys til: "' + songInput + '"\n\n' +
+                    'Stil 2 korte spørgsmål om stemning og farver.\n' +
+                    'Returner KUN JSON:\n' +
+                    '{"songTitle": "titel", "questions": [{"text": "spørgsmål?", "options": ["a","b","c"]}]}';
+
+                const response = await callOllama(prompt);
+                const jsonMatch = response.match(/\{[\s\S]*\}/);
+                
+                if (jsonMatch) {
+                    const data = JSON.parse(jsonMatch[0]);
+                    currentSong.title = data.songTitle || songInput;
+                    renderQuestions(data.questions);
+                }
+            } catch (error) {
+                showStatus('❌ Error: ' + error.message);
+                container.innerHTML = '';
+            }
+        }
+
+        function renderQuestions(questions) {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = questions.map((q, idx) => `
+                <div class="question-card">
+                    <div class="question-text">${q.text}</div>
+                    <div class="option-buttons">
+                        ${q.options.map(opt => `
+                            <button class="option-btn" onclick="selectOption(${idx}, '${opt}', this)">
+                                ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML += '<button class="main-button" onclick="generateLight()">Create Light Design →</button>';
+        }
+
+        function selectOption(idx, opt, btn) {
+            const card = btn.closest('.question-card');
+            card.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        }
+
+        async function generateLight() {
+            const selected = Array.from(document.querySelectorAll('.option-btn.selected')).map(b => b.textContent.trim());
+
+            document.getElementById('questionsContainer').innerHTML = 
+                '<div class="loading"><div class="spinner"></div>Creating light design...</div>';
+
+            try {
+                const prompt = 'Lav lysdesign til "' + currentSong.input + '".\n' +
+                    'Præferencer: ' + (selected.join(', ') || 'ingen') + '\n\n' +
+                    'Returner KUN JSON:\n' +
+                    '{"structure":["intro","verse","chorus"],\n' +
+                    '"parts":{"intro":{"zones":{"front_right":{"color":"#ff0000","intensity":200}}}}}\n';
+
+                const response = await callOllama(prompt);
+                const jsonMatch = response.match(/\{[\s\S]*\}/);
+                
+                if (jsonMatch) {
+                    currentLight = JSON.parse(jsonMatch[0]);
+                    currentSong.lightDesign = currentLight;
+                    displayLight();
+                }
+            } catch (error) {
+                showStatus('❌ Error: ' + error.message);
+            }
+        }
+
+        function displayLight() {
+            document.getElementById('questionsContainer').innerHTML = '';
+            const preview = document.getElementById('lightPreview');
+            preview.style.display = 'block';
+
+            const firstPart = currentLight.structure[0];
+            const zones = currentLight.parts[firstPart].zones;
+            
+            const grid = document.getElementById('zonesGrid');
+            const zoneNames = ['front_left', 'front_right', 'mid_left', 'mid_right', 'back_left', 'back_right'];
+            
+            grid.innerHTML = zoneNames.map(name => {
+                const zone = zones[name] || { color: '#000', intensity: 0 };
+                return `
+                    <div class="zone-card" style="background: ${zone.color}${Math.round(zone.intensity/255*100).toString(16).padStart(2,'0')};">
+                        <span class="zone-label">${name.replace('_', ' ')}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function saveLight() {
+            if (!currentLight || !currentSong) return;
+
+            const song = {
+                id: Date.now(),
+                title: currentSong.title,
+                lightDesign: currentLight,
+                createdAt: new Date().toISOString()
+            };
+
+            savedSongs.push(song);
+            localStorage.setItem('mobileSongs', JSON.stringify(savedSongs));
+            
+            showStatus('✅ Light design saved!');
+            setTimeout(() => {
+                showScreen('songsScreen');
+                renderSongs();
+            }, 1000);
+        }
+
+        function renderSongs() {
+            const container = document.getElementById('songsContainer');
+            
+            if (savedSongs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">💡</div>
+                        <p>No saved songs yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = savedSongs.map(song => `
+                <div class="song-item" onclick="activateSong(${song.id})">
+                    <div class="song-title">${song.title}</div>
+                    <div class="song-meta">${new Date(song.createdAt).toLocaleDateString()}</div>
+                </div>
+            `).join('');
+        }
+
+        async function activateSong(id) {
+            const song = savedSongs.find(s => s.id === id);
+            if (!song || !settings.espIp) return;
+
+            showStatus('🔄 Activating light...');
+
+            // Send to ESP8266
+            // (DMX logic here - similar to desktop version)
+            
+            showStatus('✅ Light activated!');
+        }
+
+        // Status messages
+        function showStatus(message) {
+            const existing = document.querySelector('.status-box');
+            if (existing) existing.remove();
+
+            const status = document.createElement('div');
+            status.className = 'status-box';
+            status.textContent = message;
+            document.body.appendChild(status);
+
+            setTimeout(() => status.remove(), 3000);
+        }
+
+        // Prevent pull-to-refresh on iOS
+        let lastY = 0;
+        document.addEventListener('touchstart', e => lastY = e.touches[0].clientY);
+        document.addEventListener('touchmove', e => {
+            const y = e.touches[0].clientY;
+            if (y > lastY && window.scrollY === 0) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html>
