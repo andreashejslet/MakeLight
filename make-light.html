@@ -1306,8 +1306,36 @@
                             // Remove trailing commas
                             jsonContent = jsonContent.replace(/,(\s*[}\]])/g, '$1');
                             
-                            // Ensure all property names are quoted
-                            jsonContent = jsonContent.replace(/(\w+):/g, '"$1":');
+                            // Fix unterminated strings by finding the last quote and adding closing
+                            const lines = jsonContent.split('\n');
+                            let inString = false;
+                            let lastQuoteIndex = -1;
+                            
+                            for (let i = 0; i < jsonContent.length; i++) {
+                                const char = jsonContent[i];
+                                const prevChar = i > 0 ? jsonContent[i-1] : '';
+                                
+                                if (char === '"' && prevChar !== '\\') {
+                                    inString = !inString;
+                                    if (!inString) lastQuoteIndex = i;
+                                }
+                            }
+                            
+                            // If we're still in a string, truncate to last valid point
+                            if (inString && lastQuoteIndex > 0) {
+                                jsonContent = jsonContent.substring(0, lastQuoteIndex + 1);
+                                // Add closing structure
+                                let openBraces = 0;
+                                for (let char of jsonContent) {
+                                    if (char === '{') openBraces++;
+                                }
+                                for (let i = 0; i < openBraces; i++) {
+                                    jsonContent += '}';
+                                }
+                            }
+                            
+                            // Ensure all property names are quoted (more carefully)
+                            jsonContent = jsonContent.replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3');
                             
                             console.log('🔧 Cleaned JSON:', jsonContent);
                         }
