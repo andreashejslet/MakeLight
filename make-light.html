@@ -1232,12 +1232,26 @@
                 '}';
 
                 const content = await callAI(prompt);
+                console.log('🤖 AI Raw Response:', content);
+                
                 const jsonMatch = content.match(/\{[\s\S]*\}/);
+                console.log('🔍 JSON Match:', jsonMatch);
                 
                 if (jsonMatch) {
-                    currentLight = JSON.parse(jsonMatch[0]);
-                    currentSong.lightDesign = currentLight;
-                    displayLightPreview();
+                    try {
+                        currentLight = JSON.parse(jsonMatch[0]);
+                        console.log('✅ Parsed Light Design:', currentLight);
+                        currentSong.lightDesign = currentLight;
+                        displayLightPreview();
+                    } catch (parseError) {
+                        console.error('❌ JSON Parse Error:', parseError);
+                        console.error('Raw JSON that failed:', jsonMatch[0]);
+                        showStatus('Error: AI returned invalid JSON format');
+                    }
+                } else {
+                    console.error('❌ No JSON found in response');
+                    console.error('Full response:', content);
+                    showStatus('Error: No JSON found in AI response');
                 }
             } catch (error) {
                 console.error('Error:', error);
