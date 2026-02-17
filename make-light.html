@@ -1301,6 +1301,17 @@
                             console.log('🔧 JSON Content to parse:', jsonContent);
                         }
                         
+                        // Basic JSON validation before parsing
+                        if (jsonContent) {
+                            // Remove trailing commas
+                            jsonContent = jsonContent.replace(/,(\s*[}\]])/g, '$1');
+                            
+                            // Ensure all property names are quoted
+                            jsonContent = jsonContent.replace(/(\w+):/g, '"$1":');
+                            
+                            console.log('🔧 Cleaned JSON:', jsonContent);
+                        }
+                        
                         currentLight = JSON.parse(jsonContent);
                         console.log('✅ Parsed Light Design:', currentLight);
                         currentSong.lightDesign = currentLight;
