@@ -1244,15 +1244,43 @@
                 const content = await callAI(prompt);
                 console.log('🤖 AI Raw Response:', content);
                 
-                // Find complete JSON by matching braces properly
-                const jsonMatch = content.match(/```json\s*(\{[\s\S]*?\})\s*```/) || content.match(/\{[\s\S]*\}/);
+                // Try multiple patterns to find JSON
+                let jsonMatch = content.match(/```json\s*(\{[\s\S]*?\})\s*```/);  // Complete JSON in markdown
+                if (!jsonMatch) {
+                    jsonMatch = content.match(/```json\s*(\{[\s\S]*)/);  // Incomplete JSON in markdown
+                }
+                if (!jsonMatch) {
+                    jsonMatch = content.match(/\{[\s\S]*\}/);  // Complete JSON without markdown
+                }
+                if (!jsonMatch) {
+                    jsonMatch = content.match(/\{[\s\S]*/);  // Incomplete JSON without markdown
+                }
+                
                 console.log('🔍 JSON Match:', jsonMatch);
                 
                 if (jsonMatch) {
                     try {
-                        // Extract the JSON content (remove ```json wrapper if present)
-                        const jsonContent = jsonMatch[1] || jsonMatch[0];
-                        console.log('🔧 JSON Content to parse:', jsonContent);
+                        // Extract the JSON content
+                        let jsonContent = jsonMatch[1] || jsonMatch[0];
+                        
+                        // Try to fix incomplete JSON by counting braces
+                        if (jsonContent) {
+                            let openBraces = 0;
+                            let closeBraces = 0;
+                            for (let char of jsonContent) {
+                                if (char === '{') openBraces++;
+                                if (char === '}') closeBraces++;
+                            }
+                            
+                            // Add missing closing braces
+                            while (openBraces > closeBraces) {
+                                jsonContent += '}';
+                                closeBraces++;
+                            }
+                            
+                            console.log('🔧 JSON Content to parse:', jsonContent);
+                            console.log(`🔢 Brace count: ${openBraces} open, ${closeBraces} close`);
+                        }
                         
                         currentLight = JSON.parse(jsonContent);
                         console.log('✅ Parsed Light Design:', currentLight);
@@ -1260,7 +1288,7 @@
                         displayLightPreview();
                     } catch (parseError) {
                         console.error('❌ JSON Parse Error:', parseError);
-                        console.error('Raw JSON that failed:', jsonMatch[1] || jsonMatch[0]);
+                        console.error('Raw JSON that failed:', jsonContent);
                         showStatus('Error: AI returned invalid JSON format');
                     }
                 } else {
