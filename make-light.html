@@ -1493,8 +1493,13 @@ Returner KUN opdateret JSON.`;
             if (!song) return;
 
             const partName = song.lightDesign.structure[partIndex];
-            const zones = song.lightDesign.parts[partName].zones;
+            const part = song.lightDesign.parts[partName];
+            if (!part || !part.zones) {
+                console.warn('No zones found for part:', partName);
+                return;
+            }
             
+            const zones = part.zones;
             await sendDMXData(zones);
             renderSongList();
         }
@@ -1510,7 +1515,8 @@ Returner KUN opdateret JSON.`;
             const dmxData = zonesToDMX(zones);
             
             try {
-                await fetch(`http://${settings.espIp}/dmx`, {
+                const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+                await fetch(`${protocol}//${settings.espIp}/dmx`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ channels: dmxData })
