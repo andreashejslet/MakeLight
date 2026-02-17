@@ -1272,14 +1272,15 @@
                                 if (char === '}') closeBraces++;
                             }
                             
-                            // Add missing closing braces
+                            console.log(`🔢 Brace count: ${openBraces} open, ${closeBraces} close`);
+                            
+                            // Only add missing closing braces if needed
                             while (openBraces > closeBraces) {
                                 jsonContent += '}';
                                 closeBraces++;
                             }
                             
                             console.log('🔧 JSON Content to parse:', jsonContent);
-                            console.log(`🔢 Brace count: ${openBraces} open, ${closeBraces} close`);
                         }
                         
                         currentLight = JSON.parse(jsonContent);
