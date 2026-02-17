@@ -792,11 +792,6 @@
         function toggleSettings() {
             const panel = document.getElementById('settingsPanel');
             panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-            
-            // Add debug download button when settings are opened
-            if (panel.style.display === 'block') {
-                setTimeout(() => addDebugDownloadButton(), 100);
-            }
         }
 
         function loadSettings() {
@@ -1143,45 +1138,7 @@
             return data.response;
         }
 
-        // Auto-logging to file for debugging
-        const debugLog = [];
-        const originalLog = console.log;
-        const originalError = console.error;
-        
-        console.log = function(...args) {
-            originalLog.apply(console, args);
-            debugLog.push({type: 'log', timestamp: new Date().toISOString(), message: args.join(' ')});
-        };
-        
-        console.error = function(...args) {
-            originalError.apply(console, args);
-            debugLog.push({type: 'error', timestamp: new Date().toISOString(), message: args.join(' ')});
-        };
-        
-        // Function to download debug log
-        function downloadDebugLog() {
-            const logText = debugLog.map(entry => `[${entry.timestamp}] ${entry.type.toUpperCase()}: ${entry.message}`).join('\n');
-            const blob = new Blob([logText], {type: 'text/plain'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `make-light-debug-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-        
-        // Add download button to settings
-        function addDebugDownloadButton() {
-            const settingsPanel = document.querySelector('.settings-panel');
-            if (settingsPanel && !document.getElementById('debug-download-btn')) {
-                const debugBtn = document.createElement('button');
-                debugBtn.id = 'debug-download-btn';
-                debugBtn.textContent = '📥 Download Debug Log';
-                debugBtn.style.cssText = 'margin-top: 10px; padding: 8px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer;';
-                debugBtn.onclick = downloadDebugLog;
-                settingsPanel.appendChild(debugBtn);
-            }
-        }
+        // AI Integration
         async function generateQuestions() {
             const songInput = document.getElementById('songInput').value.trim();
             if (!songInput) return;
