@@ -1494,8 +1494,11 @@ Returner KUN opdateret JSON.`;
 
             const partName = song.lightDesign.structure[partIndex];
             const part = song.lightDesign.parts[partName];
+            console.log('🔍 Debug part:', { partName, part, structure: song.lightDesign.structure });
+            
             if (!part || !part.zones) {
                 console.warn('No zones found for part:', partName);
+                console.warn('Available parts:', Object.keys(song.lightDesign.parts));
                 return;
             }
             
@@ -1515,8 +1518,8 @@ Returner KUN opdateret JSON.`;
             const dmxData = zonesToDMX(zones);
             
             try {
-                const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-                await fetch(`${protocol}//${settings.espIp}/dmx`, {
+                // ESP8266 usually only supports HTTP, not HTTPS
+                await fetch(`http://${settings.espIp}/dmx`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ channels: dmxData })
