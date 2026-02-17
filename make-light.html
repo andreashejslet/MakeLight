@@ -1267,9 +1267,27 @@
                         if (jsonContent) {
                             let openBraces = 0;
                             let closeBraces = 0;
-                            for (let char of jsonContent) {
-                                if (char === '{') openBraces++;
-                                if (char === '}') closeBraces++;
+                            let lastValidIndex = jsonContent.length;
+                            
+                            // Find the last valid position by tracking balance
+                            for (let i = 0; i < jsonContent.length; i++) {
+                                const char = jsonContent[i];
+                                if (char === '{') {
+                                    openBraces++;
+                                } else if (char === '}') {
+                                    closeBraces++;
+                                    // If we have more closing than opening, truncate here
+                                    if (closeBraces > openBraces) {
+                                        lastValidIndex = i;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            // Truncate if we found invalid closing braces
+                            if (lastValidIndex < jsonContent.length) {
+                                jsonContent = jsonContent.substring(0, lastValidIndex);
+                                closeBraces = openBraces; // Reset to match opens
                             }
                             
                             console.log(`🔢 Brace count: ${openBraces} open, ${closeBraces} close`);
